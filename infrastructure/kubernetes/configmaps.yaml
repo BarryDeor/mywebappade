@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-config
+  namespace: hr-payroll
+data:
+  postgres-host: "postgres-service.hr-payroll.svc.cluster.local"
+  postgres-port: "5432"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: messaging-config
+  namespace: hr-payroll
+data:
+  rabbitmq-host: "rabbitmq-service.hr-payroll.svc.cluster.local"
+  rabbitmq-port: "5672"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cache-config
+  namespace: hr-payroll
+data:
+  redis-host: "redis-service.hr-payroll.svc.cluster.local"
+  redis-port: "6379"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: hr-payroll
+data:
+  kong.yml: |
+    _format_version: "3.0"
+    services:
+      - name: employee-service
+        url: http://employee-service.hr-payroll.svc.cluster.local
+        routes:
+          - name: employee-routes
+            paths:
+              - /api/v1/employees
+            methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 100
+              policy: local
+          - name: jwt
+            config:
+              secret_is_base64: false
+      
+      - name: payroll-service
+        url: http://payroll-service.hr-payroll.svc.cluster.local
+        routes:
+          - name: payroll-routes
+            paths:
+              - /api/v1/payroll
+            methods:
+              - GET
+              - POST
+              - PUT
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 50
+              policy: local
+          - name: jwt
+            config:
+              secret_is_base64: false
+      
+      - name: time-attendance-service
+        url: http://time-attendance-service.hr-payroll.svc.cluster.local
+        routes:
+          - name: attendance-routes
+            paths:
+              - /api/v1/attendance
+              - /api/v1/leaves
+            methods:
+              - GET
+              - POST
+              - PUT
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 200
+              policy: local
+          - name: jwt
+            config:
+              secret_is_base64: false

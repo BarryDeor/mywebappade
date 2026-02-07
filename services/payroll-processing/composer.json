@@ -1,0 +1,23 @@
+{
+    "name": "hrpayroll/payroll-processing-service",
+    "description": "Payroll Processing Microservice",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "symfony/http-foundation": "^6.4",
+        "symfony/routing": "^6.4",
+        "doctrine/orm": "^2.17",
+        "doctrine/dbal": "^3.7",
+        "ramsey/uuid": "^4.7",
+        "monolog/monolog": "^3.5",
+        "brick/money": "^0.8"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "HRPayroll\\PayrollProcessing\\": "src/"
+        }
+    }
+}
