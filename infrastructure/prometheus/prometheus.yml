@@ -1,0 +1,58 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'hr-payroll-system'
+    environment: 'development'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'employee-service'
+    static_configs:
+      - targets: ['employee-service:8080']
+    metrics_path: '/metrics'
+
+  - job_name: 'payroll-service'
+    static_configs:
+      - targets: ['payroll-service:8080']
+    metrics_path: '/metrics'
+
+  - job_name: 'time-attendance-service'
+    static_configs:
+      - targets: ['time-attendance-service:8080']
+    metrics_path: '/metrics'
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:8080']
+    metrics_path: '/metrics'
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:8080']
+    metrics_path: '/metrics'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb:27017']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15672']
+    metrics_path: '/api/metrics'
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:8001']
+    metrics_path: '/metrics'

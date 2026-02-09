@@ -1,6 +1,7 @@
 {
   "name": "hr-payroll-frontend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Modern HR & Payroll Management System Frontend",
   "private": true,
   "scripts": {
