@@ -4,10 +4,11 @@ FROM php:8.2-fpm-alpine
 RUN apk add --no-cache \
     postgresql-dev \
     rabbitmq-c-dev \
+    linux-headers \
     $PHPIZE_DEPS
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql opcache
+RUN docker-php-ext-install pdo pdo_pgsql opcache sockets  
 
 # Install AMQP extension for RabbitMQ
 RUN pecl install amqp && docker-php-ext-enable amqp

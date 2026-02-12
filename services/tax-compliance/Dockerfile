@@ -5,10 +5,11 @@ RUN apk add --no-cache \
     postgresql-dev \
     rabbitmq-c-dev \
     openssl-dev \
+    linux-headers \
     $PHPIZE_DEPS
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql opcache
+RUN docker-php-ext-install pdo pdo_pgsql opcache sockets  
 
 # Install MongoDB extension
 RUN pecl install mongodb && docker-php-ext-enable mongodb

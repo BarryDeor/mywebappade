@@ -5,10 +5,11 @@ RUN apk add --no-cache \
     postgresql-dev \
     rabbitmq-c-dev \
     icu-dev \
+    linux-headers \
     $PHPIZE_DEPS
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql opcache intl bcmath
+RUN docker-php-ext-install pdo pdo_pgsql opcache sockets  intl bcmath
 
 # Install AMQP extension for RabbitMQ
 RUN pecl install amqp && docker-php-ext-enable amqp
