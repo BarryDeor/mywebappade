@@ -12,7 +12,7 @@ RUN apk add --no-cache \
 RUN docker-php-ext-install pdo pdo_pgsql opcache sockets  
 
 # Install MongoDB extension
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN pecl install mongodb-1.21.0 && docker-php-ext-enable mongodb
 
 # Install Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
