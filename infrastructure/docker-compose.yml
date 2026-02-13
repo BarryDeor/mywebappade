@@ -1,0 +1,327 @@
+version: '3.8'
+
+services:
+  # Kong Database Migration (runs once then exits)
+  kong-migration:
+    image: kong:3.4
+    container_name: hr-kong-migration
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+    depends_on:
+      - postgres
+    networks:
+      - hr-network
+    restart: on-failure
+
+  # API Gateway
+  api-gateway:
+    image: kong:3.4
+    container_name: hr-api-gateway
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - "8000:8000"  # Proxy
+      - "8443:8443"  # Proxy SSL
+      - "8001:8001"  # Admin API
+    depends_on:
+      - postgres
+      - kong-migration
+    networks:
+      - hr-network
+
+  # Employee Management Service
+  employee-service:
+    build:
+      context: ../services/employee-management
+      dockerfile: Dockerfile
+    container_name: employee-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: employee_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8101:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - hr-network
+
+  # Payroll Processing Service
+  payroll-service:
+    build:
+      context: ../services/payroll-processing
+      dockerfile: Dockerfile
+    container_name: payroll-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: payroll_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8102:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - hr-network
+
+  # Time & Attendance Service
+  time-attendance-service:
+    build:
+      context: ../services/time-attendance
+      dockerfile: Dockerfile
+    container_name: time-attendance-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: attendance_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8103:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - hr-network
+
+  # User & Access Management Service
+  user-service:
+    build:
+      context: ..
+      dockerfile: services/user-access-management/Dockerfile
+    container_name: user-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: user_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8104:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - hr-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ../services/notification
+      dockerfile: Dockerfile
+    container_name: notification-service
+    environment:
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_DB: notifications
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    ports:
+      - "8105:8080"
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - redis
+    networks:
+      - hr-network
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: hr-frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - hr-network
+    environment:
+      - VITE_API_URL=http://api-gateway:8000/api/v1
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hr-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_MULTIPLE_DATABASES: employee_db,payroll_db,attendance_db,user_db,benefits_db,tax_db,performance_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - hr-network
+
+  # MongoDB
+  mongodb:
+    image: mongo:7
+    container_name: hr-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - hr-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: hr-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - hr-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: hr-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    networks:
+      - hr-network
+
+  # Elasticsearch (for logging)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: hr-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - hr-network
+
+  # Kibana (for log visualization)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: hr-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - hr-network
+
+  # Prometheus (for metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hr-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - hr-network
+
+  # Grafana (for monitoring dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hr-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - hr-network
+
+networks:
+  hr-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  mongodb-data:
+  redis-data:
+  rabbitmq-data:
+  elasticsearch-data:
+  prometheus-data:
+  grafana-data:

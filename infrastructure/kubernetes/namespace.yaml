@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hr-payroll
+  labels:
+    name: hr-payroll
+    environment: production

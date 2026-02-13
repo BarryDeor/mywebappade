@@ -1,0 +1,31 @@
+{
+    "name": "hrpayroll/shared",
+    "description": "Shared libraries and utilities for HR & Payroll Management System",
+    "type": "library",
+    "require": {
+        "php": ">=8.2",
+        "symfony/http-foundation": "^6.4",
+        "symfony/serializer": "^6.4",
+        "symfony/validator": "^6.4",
+        "doctrine/dbal": "^3.7",
+        "predis/predis": "^2.2",
+        "firebase/php-jwt": "^6.10",
+        "ramsey/uuid": "^4.7",
+        "monolog/monolog": "^3.5",
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "phpstan/phpstan": "^1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "HRPayroll\\Shared\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HRPayroll\\Shared\\Tests\\": "tests/"
+        }
+    }
+}
