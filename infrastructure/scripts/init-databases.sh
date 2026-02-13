@@ -3,6 +3,9 @@ set -e
 
 # Create multiple databases for different microservices
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    -- Create Kong user
+    CREATE USER kong WITH PASSWORD 'kong';
+
     CREATE DATABASE employee_db;
     CREATE DATABASE payroll_db;
     CREATE DATABASE attendance_db;
@@ -11,7 +14,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE tax_db;
     CREATE DATABASE performance_db;
     CREATE DATABASE recruitment_db;
-    CREATE DATABASE kong;
+    CREATE DATABASE kong OWNER kong;
     
     GRANT ALL PRIVILEGES ON DATABASE employee_db TO postgres;
     GRANT ALL PRIVILEGES ON DATABASE payroll_db TO postgres;
@@ -21,7 +24,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT ALL PRIVILEGES ON DATABASE tax_db TO postgres;
     GRANT ALL PRIVILEGES ON DATABASE performance_db TO postgres;
     GRANT ALL PRIVILEGES ON DATABASE recruitment_db TO postgres;
-    GRANT ALL PRIVILEGES ON DATABASE kong TO postgres;
+    GRANT ALL PRIVILEGES ON DATABASE kong TO kong;
 EOSQL
 
 echo "Multiple databases created successfully!"

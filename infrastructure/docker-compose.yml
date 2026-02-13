@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  # Kong Database Migration (runs once then exits)
+  kong-migration:
+    image: kong:3.4
+    container_name: hr-kong-migration
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+    depends_on:
+      - postgres
+    networks:
+      - hr-network
+    restart: on-failure
+
   # API Gateway
   api-gateway:
     image: kong:3.4
@@ -21,6 +37,7 @@ services:
       - "8001:8001"  # Admin API
     depends_on:
       - postgres
+      - kong-migration
     networks:
       - hr-network
 
@@ -111,8 +128,8 @@ services:
   # User & Access Management Service
   user-service:
     build:
-      context: ../services/user-access-management
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: services/user-access-management/Dockerfile
     container_name: user-service
     environment:
       DB_HOST: postgres

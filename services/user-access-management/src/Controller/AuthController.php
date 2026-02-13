@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HRPayroll\UserAccessManagement\Controller;
 
+use HRPayroll\Shared\Application\Route;
 use HRPayroll\Shared\Security\JWTManager;
 use HRPayroll\Shared\Security\RBACManager;
 use HRPayroll\UserAccessManagement\Repository\UserRepository;
@@ -32,8 +33,8 @@ class AuthController
 
     /**
      * User login
-     * POST /api/v1/auth/login
      */
+    #[Route('/api/v1/auth/login', methods: ['POST'])]
     public function login(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -106,8 +107,8 @@ class AuthController
 
     /**
      * Refresh access token
-     * POST /api/v1/auth/refresh
      */
+    #[Route('/api/v1/auth/refresh', methods: ['POST'])]
     public function refresh(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -158,8 +159,8 @@ class AuthController
 
     /**
      * User logout
-     * POST /api/v1/auth/logout
      */
+    #[Route('/api/v1/auth/logout', methods: ['POST'])]
     public function logout(Request $request): JsonResponse
     {
         // In a production system, you would:
@@ -168,10 +169,10 @@ class AuthController
         // 3. Log the logout event
 
         $authHeader = $request->headers->get('Authorization');
-        
+
         if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
             $token = substr($authHeader, 7);
-            
+
             try {
                 $payload = $this->jwtManager->validateToken($token);
                 // Add token to blacklist (implement in production)
@@ -188,8 +189,8 @@ class AuthController
 
     /**
      * Verify token and get user info
-     * GET /api/v1/auth/me
      */
+    #[Route('/api/v1/auth/me', methods: ['GET'])]
     public function me(Request $request): JsonResponse
     {
         $authHeader = $request->headers->get('Authorization');
@@ -231,8 +232,8 @@ class AuthController
 
     /**
      * Check permission
-     * POST /api/v1/auth/check-permission
      */
+    #[Route('/api/v1/auth/check-permission', methods: ['POST'])]
     public function checkPermission(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -276,7 +277,7 @@ class AuthController
     private function getUserPermissions(array $roles): array
     {
         $permissions = [];
-        
+
         foreach ($roles as $role) {
             $rolePermissions = $this->rbacManager->getRolePermissions($role);
             $permissions = array_merge($permissions, $rolePermissions);

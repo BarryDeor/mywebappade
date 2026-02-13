@@ -20,7 +20,8 @@
   },
   "autoload": {
     "psr-4": {
-      "HRPayroll\\UserAccessManagement\\": "src/"
+      "HRPayroll\\UserAccessManagement\\": "src/",
+      "HRPayroll\\Shared\\": "shared/src/"
     }
   },
   "autoload-dev": {
